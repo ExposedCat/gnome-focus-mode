@@ -1,0 +1,8 @@
+{
+  "name": "Time Tracker",
+  "description": "Windows-based time tracker",
+  "uuid": "time-tracker@exposedcat",
+  "shell-version": [
+    "46"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "gnome-time-tracker",
+  "description": "Windows-based time tracker for GNOME Shell",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc && cp metadata.json build",
+    "pack": "zip time-tracker@exposedcat.zip -r *.js **/*.js metadata.json",
+    "install": "gnome-extensions install build/time-tracker@exposedcat.zip --force",
+    "test": "dbus-run-session -- gnome-shell --nested --wayland"
+  },
+  "keywords": [],
+  "author": "ExposedCat",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.14.8",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-functional": "^6.6.0",
+    "eslint-plugin-github": "^5.0.1",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-prettier": "^5.1.3",
+    "prettier": "^3.3.2",
+    "prettier-eslint": "^16.3.0"
+  }
+}
