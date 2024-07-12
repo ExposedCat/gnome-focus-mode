@@ -1,5 +1,10 @@
-import Shell from 'gi://Shell';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import St from 'gi://St';
+import Shell from 'gi://Shell';
+import Clutter from 'gi://Clutter';
 
 class Window {
   constructor(id, name) {
@@ -7,11 +12,11 @@ class Window {
     this.name = name;
     this.time = 0;
     this.openedAt = null;
-    log(`[time-tracker] Window "${this.name}" created`);
+    log(`[time-tracker][window] Window "${this.name}" created`);
   }
 
   open() {
-    log(`[time-tracker] Window "${this.name}" opened`);
+    log(`[time-tracker][window] Window "${this.name}" opened`);
     this.openedAt = Date.now();
   }
 
@@ -19,16 +24,34 @@ class Window {
     const elapsed = Date.now() - this.openedAt;
     this.openedAt = null;
     this.time += elapsed;
-    log(`[time-tracker] Window "${this.name}" closed with diff ${elapsed}, total of ${this.time}`);
+    log(`[time-tracker][window] Window "${this.name}" closed with diff ${elapsed}, total of ${this.time}`);
   }
 }
 
-class Manager {
-  constructor() {
+class TimeManager {
+  constructor(uiManager) {
+    this.uiManager = uiManager;
     this.display = global.display;
     this.listener = null;
     this.lastFocusedWindow = null;
     this.windows = [];
+    this.activeTime = 0;
+    this.startActiveTracker();
+  }
+
+  startActiveTracker() {
+    this.activeTime = 0;
+    this.activeTimeInterval = setInterval(() => {
+      const { id, window } = this.getFocusedWindow();
+      if (window) {
+        const time = ((window.time / 1000) | 0) + this.activeTime;
+        this.uiManager.updateEntryText(id, `${window.name} - ${time}s`);
+        this.uiManager.setText(`${time}s`);
+      } else {
+        this.uiManager.setText('Nice wallpaper');
+      }
+      this.activeTime += 1;
+    }, 1000);
   }
 
   getFocusedWindow() {
@@ -38,55 +61,110 @@ class Manager {
       const id = app.get_id();
       let window = this.windows.find(window => window.id === id);
       if (window) {
-        return window;
+        return { id, window };
       }
       window = new Window(id, app.get_name());
       this.windows.push(window);
-      return window;
+      return { id, window };
     }
-    return null;
+    return { id: null, window: null };
   }
 
   onFocusChanged() {
-    log('[time-tracker] Focus changed');
+    log('[time-tracker][time] Focus changed');
     this.lastFocusedWindow?.close();
-    this.lastFocusedWindow = this.getFocusedWindow();
-    this.lastFocusedWindow?.open();
-    log(this.getStats());
+    const { id, window } = this.getFocusedWindow();
+    this.lastFocusedWindow = window;
+    this.activeTime = 0;
+    if (window) {
+      this.lastFocusedWindow.open();
+      this.uiManager.updateEntryText(id, `${window.time}`);
+    }
   }
 
   start() {
-    log('[time-tracker] Start watching');
+    log('[time-tracker][time] Start watching');
     this.listener = this.display.connect('notify::focus-window', () => this.onFocusChanged());
   }
 
   stop() {
-    log('[time-tracker] Stop watching');
+    log('[time-tracker][time] Stop watching');
     this.lastFocusedWindow?.close();
     this.display.disconnect(this.listener);
     this.listener = null;
   }
 
   getStats() {
-    const stats = this.windows.map(window => `${window.name} - ${window.time / 1_000}s`).join('\n');
-    return `[time-tracker] CURRENT TIME STATS:\n\n${stats}`;
+    const stats = this.windows.map(window => `${window.name} - ${window.time / 1000}s`).join('\n');
+    return `[time-tracker][time] CURRENT TIME STATS:\n\n${stats}`;
+  }
+}
+
+class UIManager {
+  constructor() {
+    this.entries = {};
+
+    this.button = new PanelMenu.Button(0.0, '', false);
+
+    const box = new St.BoxLayout();
+
+    const icon = new St.Icon({ icon_name: 'preferences-system-time-symbolic', style_class: 'system-status-icon' });
+    box.add_child(icon);
+
+    this.label = new St.Label({ text: 'Nice wallpaper', y_align: Clutter.ActorAlign.CENTER });
+    box.add_child(this.label);
+
+    this.button.add_child(box);
+  }
+
+  setText(text) {
+    this.label.set_text(text);
+  }
+
+  updateEntryText(id, text) {
+    const entry = this.entries[id];
+    if (entry) {
+      entry.label.set_text(text);
+    } else {
+      this.entries[id] = new PopupMenu.PopupMenuItem(text);
+      this.button.menu.addMenuItem(this.entries[id]);
+    }
+  }
+
+  start() {
+    log('[time-tracker][ui] Enable manager');
+    Main.panel.addToStatusArea('screen-time-button', this.button, 1, 'left');
+  }
+
+  stop() {
+    log('[time-tracker][ui] Disable manager');
+    Main.panel.statusArea['screen-time-button'].destroy();
   }
 }
 
 export default class TimeTrackerExtension extends Extension {
-  manager = null;
+  constructor(metadata) {
+    super(metadata);
+    this.timeManager = null;
+    this.uiManager = null;
+  }
 
   enable() {
-    log('[time-tracker] Enable extension');
-    if (this.manager === null) {
-      this.manager = new Manager();
+    log('[time-tracker][main] Enable extension');
+    if (this.uiManager === null) {
+      this.uiManager = new UIManager();
     }
-    this.manager.start();
+    if (this.timeManager === null) {
+      this.timeManager = new TimeManager(this.uiManager);
+    }
+    this.uiManager.start();
+    this.timeManager.start();
   }
 
   disable() {
-    log('[time-tracker] Disable extension');
-    this.manager.stop();
-    this.manager = null;
+    log('[time-tracker][main] Disable extension');
+    this.uiManager.stop();
+    this.timeManager.stop();
+    this.timeManager = null;
   }
 }
