@@ -1,7 +1,7 @@
 {
-  "name": "Time Tracker",
-  "description": "Windows-based time tracker",
-  "uuid": "time-tracker@exposedcat",
+  "name": "Focus Mode",
+  "description": "Window-based focus mode",
+  "uuid": "focus-mode@exposedcat",
   "shell-version": [
     "46"
   ]

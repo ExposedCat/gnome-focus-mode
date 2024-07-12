@@ -12,11 +12,11 @@ class Window {
     this.name = name;
     this.time = 0;
     this.openedAt = null;
-    log(`[time-tracker][window] Window "${this.name}" created`);
+    log(`[focus-mode][window] Window "${this.name}" created`);
   }
 
   open() {
-    log(`[time-tracker][window] Window "${this.name}" opened`);
+    log(`[focus-mode][window] Window "${this.name}" opened`);
     this.openedAt = Date.now();
   }
 
@@ -24,7 +24,7 @@ class Window {
     const elapsed = Date.now() - this.openedAt;
     this.openedAt = null;
     this.time += elapsed;
-    log(`[time-tracker][window] Window "${this.name}" closed with diff ${elapsed}, total of ${this.time}`);
+    log(`[focus-mode][window] Window "${this.name}" closed with diff ${elapsed}, total of ${this.time}`);
   }
 }
 
@@ -71,7 +71,7 @@ class TimeManager {
   }
 
   onFocusChanged() {
-    log('[time-tracker][time] Focus changed');
+    log('[focus-mode][time] Focus changed');
     this.lastFocusedWindow?.close();
     const { id, window } = this.getFocusedWindow();
     this.lastFocusedWindow = window;
@@ -83,12 +83,12 @@ class TimeManager {
   }
 
   start() {
-    log('[time-tracker][time] Start watching');
+    log('[focus-mode][time] Start watching');
     this.listener = this.display.connect('notify::focus-window', () => this.onFocusChanged());
   }
 
   stop() {
-    log('[time-tracker][time] Stop watching');
+    log('[focus-mode][time] Stop watching');
     this.lastFocusedWindow?.close();
     this.display.disconnect(this.listener);
     this.listener = null;
@@ -96,7 +96,7 @@ class TimeManager {
 
   getStats() {
     const stats = this.windows.map(window => `${window.name} - ${window.time / 1000}s`).join('\n');
-    return `[time-tracker][time] CURRENT TIME STATS:\n\n${stats}`;
+    return `[focus-mode][time] CURRENT TIME STATS:\n\n${stats}`;
   }
 }
 
@@ -132,12 +132,12 @@ class UIManager {
   }
 
   start() {
-    log('[time-tracker][ui] Enable manager');
+    log('[focus-mode][ui] Enable manager');
     Main.panel.addToStatusArea('screen-time-button', this.button, 1, 'left');
   }
 
   stop() {
-    log('[time-tracker][ui] Disable manager');
+    log('[focus-mode][ui] Disable manager');
     Main.panel.statusArea['screen-time-button'].destroy();
   }
 }
@@ -150,7 +150,7 @@ export default class TimeTrackerExtension extends Extension {
   }
 
   enable() {
-    log('[time-tracker][main] Enable extension');
+    log('[focus-mode][main] Enable extension');
     if (this.uiManager === null) {
       this.uiManager = new UIManager();
     }
@@ -162,7 +162,7 @@ export default class TimeTrackerExtension extends Extension {
   }
 
   disable() {
-    log('[time-tracker][main] Disable extension');
+    log('[focus-mode][main] Disable extension');
     this.uiManager.stop();
     this.timeManager.stop();
     this.timeManager = null;

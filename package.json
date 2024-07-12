@@ -1,11 +1,10 @@
 {
-  "name": "gnome-time-tracker",
-  "description": "Windows-based time tracker for GNOME Shell",
+  "name": "gnome-focus-mode",
+  "description": "Window-based focus mode for GNOME Shell",
   "version": "1.0.0",
   "scripts": {
     "build": "tsc && cp metadata.json build",
-    "pack": "zip time-tracker@exposedcat.zip -r *.js **/*.js metadata.json",
-    "install": "gnome-extensions install build/time-tracker@exposedcat.zip --force",
+    "pack": "zip focus-mode@exposedcat.zip -r *.js **/*.js metadata.json",
     "test": "dbus-run-session -- gnome-shell --nested --wayland"
   },
   "keywords": [],
