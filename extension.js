@@ -36,16 +36,13 @@ class TimeManager {
     this.lastFocusedWindow = null;
     this.windows = [];
     this.activeTime = 0;
-    this.startActiveTracker();
   }
 
   startActiveTracker() {
-    this.activeTime = 0;
     this.activeTimeInterval = setInterval(() => {
-      const { id, window } = this.getFocusedWindow();
-      if (window) {
-        const time = ((window.time / 1000) | 0) + this.activeTime;
-        this.uiManager.updateEntryText(id, `${window.name} - ${time}s`);
+      if (this.lastFocusedWindow) {
+        const time = ((this.lastFocusedWindow.time / 1000) | 0) + this.activeTime;
+        this.uiManager.updateEntryText(id, `${this.lastFocusedWindow.name} - ${time}s`);
         this.uiManager.setText(`${time}s`);
       } else {
         this.uiManager.setText('Nice wallpaper');
@@ -54,17 +51,22 @@ class TimeManager {
     }, 1000);
   }
 
-  getFocusedWindow() {
+  getOrCreateWindow(id) {
+    let window = this.windows.find(window => window.id === id);
+    if (window) {
+      return window;
+    }
+    window = new Window(id, app.get_name());
+    this.windows.push(window);
+    return window;
+  }
+
+  extractFocusedWindow() {
     const windowMeta = this.display.focus_window;
     if (windowMeta) {
       const app = Shell.WindowTracker.get_default().get_window_app(windowMeta);
       const id = app.get_id();
-      let window = this.windows.find(window => window.id === id);
-      if (window) {
-        return { id, window };
-      }
-      window = new Window(id, app.get_name());
-      this.windows.push(window);
+      const window = getOrCreateWindow(id);
       return { id, window };
     }
     return { id: null, window: null };
@@ -73,7 +75,7 @@ class TimeManager {
   onFocusChanged() {
     log('[focus-mode][time] Focus changed');
     this.lastFocusedWindow?.close();
-    const { id, window } = this.getFocusedWindow();
+    const { id, window } = this.extractFocusedWindow();
     this.lastFocusedWindow = window;
     this.activeTime = 0;
     if (window) {
@@ -85,10 +87,16 @@ class TimeManager {
   start() {
     log('[focus-mode][time] Start watching');
     this.listener = this.display.connect('notify::focus-window', () => this.onFocusChanged());
+    this.onFocusChanged();
+    this.startActiveTracker();
   }
 
   stop() {
     log('[focus-mode][time] Stop watching');
+    if (this.activeTimeInterval) {
+      clearInterval(this.activeTimeInterval);
+      this.activeTimeInterval = null;
+    }
     this.lastFocusedWindow?.close();
     this.display.disconnect(this.listener);
     this.listener = null;
