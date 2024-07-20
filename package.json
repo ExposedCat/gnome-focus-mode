@@ -3,6 +3,12 @@
   "description": "Window-based focus mode for GNOME Shell",
   "version": "1.0.0",
   "keywords": [],
+  "scripts": {
+    "start": "./cli dev",
+    "clean": "./cli clean",
+    "build": "./cli build",
+    "pack": "./cli pack"
+  },
   "author": "ExposedCat",
   "license": "LGPL-3.0-or-later",
   "devDependencies": {
