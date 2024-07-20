@@ -33,7 +33,7 @@ export class UIManager {
       entry.label.set_text(text);
     } else {
       this.entries[id] = new PopupMenu.PopupMenuItem(text);
-      (this.button.menu as any).addMenuItem(this.entries[id]);
+      (this.button.menu as PopupMenu.PopupMenu).addMenuItem(this.entries[id]);
     }
   }
 

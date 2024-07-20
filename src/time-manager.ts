@@ -4,8 +4,8 @@ import { Window } from './window.js';
 import type { UIManager } from './ui-manager.js';
 
 export class TimeManager {
-  private display = (global as any).display; // FIXME:
-  private listener: NodeJS.Timeout | null = null;
+  private display = (global as unknown as Shell.Global).display;
+  private listener: number | null = null;
   private activeTimeInterval: NodeJS.Timeout | null = null;
   private lastFocusedWindow: Window | null = null;
   private windows: Window[] = [];
@@ -74,12 +74,9 @@ export class TimeManager {
       this.activeTimeInterval = null;
     }
     this.lastFocusedWindow?.close();
-    this.display.disconnect(this.listener);
+    if (this.listener) {
+      this.display.disconnect(this.listener);
+    }
     this.listener = null;
-  }
-
-  getStats() {
-    const stats = this.windows.map(window => `${window.name} - ${window.time / 1000}s`).join('\n');
-    return `[focus-mode][time] CURRENT TIME STATS:\n\n${stats}`;
   }
 }
