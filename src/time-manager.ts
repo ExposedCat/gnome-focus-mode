@@ -23,6 +23,15 @@ export class TimeManager {
         this.uiManager.setText('Nice wallpaper');
       }
       this.activeTime += 1;
+      if (this.lastFocusedWindow) {
+        if (this.activeTime >= 10) {
+          this.uiManager.setState('error');
+        } else if (this.activeTime > 5) {
+          this.uiManager.setState('warning');
+        } else {
+          this.uiManager.setState('normal');
+        }
+      }
     }, 1000);
   }
 
@@ -50,10 +59,11 @@ export class TimeManager {
 
   onFocusChanged() {
     log('[focus-mode][time] Focus changed');
+    this.activeTime = 0;
+    this.uiManager.setState('normal');
     this.lastFocusedWindow?.close();
     const { id, window } = this.extractFocusedWindow();
     this.lastFocusedWindow = window;
-    this.activeTime = 0;
     if (id && this.lastFocusedWindow) {
       this.lastFocusedWindow.open();
     }

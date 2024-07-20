@@ -37,6 +37,12 @@ export class UIManager {
     }
   }
 
+  setState(state: 'normal' | 'warning' | 'error') {
+    const background = state === 'normal' ? 'unset' : state === 'warning' ? 'orange' : 'red';
+    const color = state === 'normal' ? 'unset' : 'white';
+    this.button.set_style(`background-color: ${background}; color: ${color};`);
+  }
+
   start() {
     log('[focus-mode][ui] Enable manager');
     Main.panel.addToStatusArea('screen-time-button', this.button, 1, 'left');
