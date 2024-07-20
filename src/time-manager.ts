@@ -56,7 +56,6 @@ export class TimeManager {
     this.activeTime = 0;
     if (id && this.lastFocusedWindow) {
       this.lastFocusedWindow.open();
-      this.uiManager.updateEntryText(id, `${window.time}`);
     }
   }
 
