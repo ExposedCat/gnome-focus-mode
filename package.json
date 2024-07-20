@@ -2,14 +2,9 @@
   "name": "gnome-focus-mode",
   "description": "Window-based focus mode for GNOME Shell",
   "version": "1.0.0",
-  "scripts": {
-    "build": "tsc && cp metadata.json build",
-    "pack": "zip focus-mode@exposedcat.zip -r *.js **/*.js metadata.json",
-    "test": "dbus-run-session -- gnome-shell --nested --wayland"
-  },
   "keywords": [],
   "author": "ExposedCat",
-  "license": "ISC",
+  "license": "LGPL-3.0-or-later",
   "devDependencies": {
     "@types/node": "^20.14.8",
     "eslint": "^8.57.0",
@@ -19,6 +14,21 @@
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-prettier": "^5.1.3",
     "prettier": "^3.3.2",
-    "prettier-eslint": "^16.3.0"
+    "prettier-eslint": "^16.3.0",
+    "typescript": "^5.5.3"
+  },
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ExposedCat/gnome-focus-mode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ExposedCat/gnome-focus-mode/issues"
+  },
+  "homepage": "https://github.com/ExposedCat/gnome-focus-mode#readme",
+  "sideEffects": false,
+  "dependencies": {
+    "@girs/gjs": "^4.0.0-beta.7",
+    "@girs/gnome-shell": "^46.0.1"
   }
 }

@@ -7,11 +7,13 @@ import Shell from 'gi://Shell';
 import Clutter from 'gi://Clutter';
 
 class Window {
-  constructor(id, name) {
-    this.id = id;
-    this.name = name;
-    this.time = 0;
-    this.openedAt = null;
+  time = 0;
+  private openedAt: number | null = null;
+
+  constructor(
+    public id: string,
+    public name: string,
+  ) {
     log(`[focus-mode][window] Window "${this.name}" created`);
   }
 
@@ -21,7 +23,7 @@ class Window {
   }
 
   close() {
-    const elapsed = Date.now() - this.openedAt;
+    const elapsed = Date.now() - this.openedAt!;
     this.openedAt = null;
     this.time += elapsed;
     log(`[focus-mode][window] Window "${this.name}" closed with diff ${elapsed}, total of ${this.time}`);
@@ -29,20 +31,20 @@ class Window {
 }
 
 class TimeManager {
-  constructor(uiManager) {
-    this.uiManager = uiManager;
-    this.display = global.display;
-    this.listener = null;
-    this.lastFocusedWindow = null;
-    this.windows = [];
-    this.activeTime = 0;
-  }
+  private display = (global as any).display; // FIXME:
+  private listener: NodeJS.Timeout | null = null;
+  private activeTimeInterval: NodeJS.Timeout | null = null;
+  private lastFocusedWindow: Window | null = null;
+  private windows: Window[] = [];
+  private activeTime = 0;
+
+  constructor(private uiManager: UIManager) {}
 
   startActiveTracker() {
     this.activeTimeInterval = setInterval(() => {
       if (this.lastFocusedWindow) {
         const time = ((this.lastFocusedWindow.time / 1000) | 0) + this.activeTime;
-        this.uiManager.updateEntryText(id, `${this.lastFocusedWindow.name} - ${time}s`);
+        this.uiManager.updateEntryText(this.lastFocusedWindow.id, `${this.lastFocusedWindow.name} - ${time}s`);
         this.uiManager.setText(`${time}s`);
       } else {
         this.uiManager.setText('Nice wallpaper');
@@ -51,11 +53,12 @@ class TimeManager {
     }, 1000);
   }
 
-  getOrCreateWindow(id) {
+  getOrCreateWindow(id: string) {
     let window = this.windows.find(window => window.id === id);
     if (window) {
       return window;
     }
+    const app = Shell.WindowTracker.get_default().get_window_app(this.display.focus_window);
     window = new Window(id, app.get_name());
     this.windows.push(window);
     return window;
@@ -66,7 +69,7 @@ class TimeManager {
     if (windowMeta) {
       const app = Shell.WindowTracker.get_default().get_window_app(windowMeta);
       const id = app.get_id();
-      const window = getOrCreateWindow(id);
+      const window = this.getOrCreateWindow(id);
       return { id, window };
     }
     return { id: null, window: null };
@@ -78,7 +81,7 @@ class TimeManager {
     const { id, window } = this.extractFocusedWindow();
     this.lastFocusedWindow = window;
     this.activeTime = 0;
-    if (window) {
+    if (id && this.lastFocusedWindow) {
       this.lastFocusedWindow.open();
       this.uiManager.updateEntryText(id, `${window.time}`);
     }
@@ -109,9 +112,11 @@ class TimeManager {
 }
 
 class UIManager {
-  constructor() {
-    this.entries = {};
+  private entries: Record<string, PopupMenu.PopupMenuItem> = {};
+  private button: PanelMenu.Button;
+  private label: St.Label;
 
+  constructor() {
     this.button = new PanelMenu.Button(0.0, '', false);
 
     const box = new St.BoxLayout();
@@ -125,17 +130,17 @@ class UIManager {
     this.button.add_child(box);
   }
 
-  setText(text) {
+  setText(text: string) {
     this.label.set_text(text);
   }
 
-  updateEntryText(id, text) {
+  updateEntryText(id: string, text: string) {
     const entry = this.entries[id];
     if (entry) {
       entry.label.set_text(text);
     } else {
       this.entries[id] = new PopupMenu.PopupMenuItem(text);
-      this.button.menu.addMenuItem(this.entries[id]);
+      (this.button.menu as any).addMenuItem(this.entries[id]);
     }
   }
 
@@ -146,16 +151,13 @@ class UIManager {
 
   stop() {
     log('[focus-mode][ui] Disable manager');
-    Main.panel.statusArea['screen-time-button'].destroy();
+    this.button.destroy();
   }
 }
 
 export default class TimeTrackerExtension extends Extension {
-  constructor(metadata) {
-    super(metadata);
-    this.timeManager = null;
-    this.uiManager = null;
-  }
+  private timeManager: TimeManager | null = null;
+  private uiManager: UIManager | null = null;
 
   enable() {
     log('[focus-mode][main] Enable extension');
@@ -171,8 +173,8 @@ export default class TimeTrackerExtension extends Extension {
 
   disable() {
     log('[focus-mode][main] Disable extension');
-    this.uiManager.stop();
-    this.timeManager.stop();
+    this.uiManager!.stop();
+    this.timeManager!.stop();
     this.timeManager = null;
   }
 }
