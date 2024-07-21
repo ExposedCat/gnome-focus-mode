@@ -2,6 +2,7 @@ import Shell from 'gi://Shell';
 import Gio from 'gi://Gio';
 
 import { Window } from './window.js';
+import { formatTime } from './utils.js';
 import type { UIManager } from './ui-manager.js';
 
 export class TimeManager {
@@ -24,8 +25,9 @@ export class TimeManager {
     this.activeTimeInterval = setInterval(() => {
       if (this.lastFocusedWindow) {
         const time = ((this.lastFocusedWindow.time / 1000) | 0) + this.activeTime;
-        this.uiManager.updateEntryText(this.lastFocusedWindow.id, `${this.lastFocusedWindow.name} - ${time}s`);
-        this.uiManager.setText(`${time}s`);
+        const stringTime = formatTime(time);
+        this.uiManager.updateEntryText(this.lastFocusedWindow.id, `${this.lastFocusedWindow.name} - ${stringTime}`);
+        this.uiManager.setText(stringTime);
       } else {
         this.uiManager.setText('Nice wallpaper');
       }
@@ -65,7 +67,6 @@ export class TimeManager {
   }
 
   onFocusChanged() {
-    log('[focus-mode][time] Focus changed');
     this.activeTime = 0;
     this.uiManager.setState('normal');
     this.lastFocusedWindow?.close();
@@ -75,14 +76,12 @@ export class TimeManager {
   }
 
   start() {
-    log('[focus-mode][time] Start watching');
     this.listener = this.display.connect('notify::focus-window', () => this.onFocusChanged());
     this.onFocusChanged();
     this.startActiveTracker();
   }
 
   stop() {
-    log('[focus-mode][time] Stop watching');
     if (this.activeTimeInterval) {
       clearInterval(this.activeTimeInterval);
       this.activeTimeInterval = null;

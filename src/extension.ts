@@ -8,7 +8,6 @@ export default class TimeTrackerExtension extends Extension {
   private uiManager: UIManager | null = null;
 
   enable() {
-    log('[focus-mode][main] Enable extension');
     if (this.uiManager === null) {
       this.uiManager = new UIManager();
     }
@@ -21,7 +20,6 @@ export default class TimeTrackerExtension extends Extension {
   }
 
   disable() {
-    log('[focus-mode][main] Disable extension');
     this.uiManager!.stop();
     this.timeManager!.stop();
     this.timeManager = null;

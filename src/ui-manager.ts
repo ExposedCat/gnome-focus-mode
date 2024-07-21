@@ -35,7 +35,6 @@ export class UIManager {
     } else {
       this.entries[id] = new PopupMenu.PopupMenuItem(text);
       this.entries[id].connect('activate', () => {
-        log(`Copying ${id} to the clipboard`);
         this.clipboard.set_text(St.ClipboardType.CLIPBOARD, id);
         Main.notify(`Focus Mode`, `Copied "${id}"`);
       });
@@ -50,12 +49,10 @@ export class UIManager {
   }
 
   start() {
-    log('[focus-mode][ui] Enable manager');
     Main.panel.addToStatusArea('screen-time-button', this.button, 1, 'left');
   }
 
   stop() {
-    log('[focus-mode][ui] Disable manager');
     this.button.destroy();
   }
 }
