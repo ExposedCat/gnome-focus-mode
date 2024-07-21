@@ -1,4 +1,5 @@
 import Shell from 'gi://Shell';
+import Gio from 'gi://Gio';
 
 import { Window } from './window.js';
 import type { UIManager } from './ui-manager.js';
@@ -10,8 +11,14 @@ export class TimeManager {
   private lastFocusedWindow: Window | null = null;
   private windows: Window[] = [];
   private activeTime = 0;
+  private workWindowIds: string[];
 
-  constructor(private uiManager: UIManager) {}
+  constructor(
+    private uiManager: UIManager,
+    private settings: Gio.Settings,
+  ) {
+    this.workWindowIds = this.settings.get_string('work-windows').split(',');
+  }
 
   startActiveTracker() {
     this.activeTimeInterval = setInterval(() => {
@@ -23,10 +30,10 @@ export class TimeManager {
         this.uiManager.setText('Nice wallpaper');
       }
       this.activeTime += 1;
-      if (this.lastFocusedWindow) {
-        if (this.activeTime >= 10) {
+      if (this.lastFocusedWindow && this.workWindowIds.includes(this.lastFocusedWindow.id)) {
+        if (this.activeTime >= this.settings.get_int('error-time')) {
           this.uiManager.setState('error');
-        } else if (this.activeTime > 5) {
+        } else if (this.activeTime > this.settings.get_int('warning-time')) {
           this.uiManager.setState('warning');
         } else {
           this.uiManager.setState('normal');
@@ -62,11 +69,9 @@ export class TimeManager {
     this.activeTime = 0;
     this.uiManager.setState('normal');
     this.lastFocusedWindow?.close();
-    const { id, window } = this.extractFocusedWindow();
+    const { window } = this.extractFocusedWindow();
     this.lastFocusedWindow = window;
-    if (id && this.lastFocusedWindow) {
-      this.lastFocusedWindow.open();
-    }
+    this.lastFocusedWindow?.open();
   }
 
   start() {

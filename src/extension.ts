@@ -13,7 +13,8 @@ export default class TimeTrackerExtension extends Extension {
       this.uiManager = new UIManager();
     }
     if (this.timeManager === null) {
-      this.timeManager = new TimeManager(this.uiManager);
+      const settings = this.getSettings();
+      this.timeManager = new TimeManager(this.uiManager, settings);
     }
     this.uiManager.start();
     this.timeManager.start();

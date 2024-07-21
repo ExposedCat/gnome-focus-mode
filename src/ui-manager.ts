@@ -8,6 +8,7 @@ export class UIManager {
   private entries: Record<string, PopupMenu.PopupMenuItem> = {};
   private button: PanelMenu.Button;
   private label: St.Label;
+  private clipboard = St.Clipboard.get_default();
 
   constructor() {
     this.button = new PanelMenu.Button(0.0, '', false);
@@ -33,6 +34,11 @@ export class UIManager {
       entry.label.set_text(text);
     } else {
       this.entries[id] = new PopupMenu.PopupMenuItem(text);
+      this.entries[id].connect('activate', () => {
+        log(`Copying ${id} to the clipboard`);
+        this.clipboard.set_text(St.ClipboardType.CLIPBOARD, id);
+        Main.notify(`Focus Mode`, `Copied "${id}"`);
+      });
       (this.button.menu as PopupMenu.PopupMenu).addMenuItem(this.entries[id]);
     }
   }

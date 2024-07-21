@@ -2,6 +2,7 @@
   "name": "Focus Mode",
   "description": "Window-based focus mode",
   "uuid": "focus-mode@exposedcat",
+  "settings-schema": "org.gnome.shell.extensions.focus-mode",
   "shell-version": [
     "46"
   ]
