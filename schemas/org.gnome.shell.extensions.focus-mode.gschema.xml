@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema id="org.gnome.shell.extensions.focus-mode" path="/org/gnome/shell/extensions/focus-mode/">
-    <!-- WINDOWS -->
-    <key type="s" name="work-windows">
-      <default>""</default>
-      <summary>Work windows</summary>
-      <description>Window IDs, comma-separated</description>
-    </key>
     <!-- TIME -->
     <key type="i" name="warning-time">
       <default>60</default>

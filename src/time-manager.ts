@@ -12,33 +12,30 @@ export class TimeManager {
   private lastFocusedWindow: Window | null = null;
   private windows: Window[] = [];
   private activeTime = 0;
-  private workWindowIds: string[];
 
   constructor(
     private uiManager: UIManager,
     private settings: Gio.Settings,
-  ) {
-    this.workWindowIds = this.settings.get_string('work-windows').split(',');
-  }
+  ) {}
 
   startActiveTracker() {
     this.activeTimeInterval = setInterval(() => {
       if (this.lastFocusedWindow) {
         const time = ((this.lastFocusedWindow.time / 1000) | 0) + this.activeTime;
         const stringTime = formatTime(time);
-        this.uiManager.updateEntryText(this.lastFocusedWindow.id, `${this.lastFocusedWindow.name} - ${stringTime}`);
+        this.uiManager.updateEntryText(this.lastFocusedWindow.id, this.lastFocusedWindow.name, stringTime);
         this.uiManager.setText(stringTime);
       } else {
         this.uiManager.setText('Nice wallpaper');
       }
       this.activeTime += 1;
-      if (this.lastFocusedWindow && this.workWindowIds.includes(this.lastFocusedWindow.id)) {
+      if (this.lastFocusedWindow) {
         if (this.activeTime >= this.settings.get_int('error-time')) {
-          this.uiManager.setState('error');
+          this.uiManager.setState(this.lastFocusedWindow.id, 'error');
         } else if (this.activeTime > this.settings.get_int('warning-time')) {
-          this.uiManager.setState('warning');
+          this.uiManager.setState(this.lastFocusedWindow.id, 'warning');
         } else {
-          this.uiManager.setState('normal');
+          this.uiManager.setState(this.lastFocusedWindow.id, 'normal');
         }
       }
     }, 1000);
@@ -68,7 +65,7 @@ export class TimeManager {
 
   onFocusChanged() {
     this.activeTime = 0;
-    this.uiManager.setState('normal');
+    this.uiManager.setState(null, 'normal');
     this.lastFocusedWindow?.close();
     const { window } = this.extractFocusedWindow();
     this.lastFocusedWindow = window;

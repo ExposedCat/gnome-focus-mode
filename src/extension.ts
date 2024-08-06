@@ -20,8 +20,9 @@ export default class TimeTrackerExtension extends Extension {
   }
 
   disable() {
-    this.uiManager!.stop();
     this.timeManager!.stop();
     this.timeManager = null;
+    this.uiManager!.stop();
+    this.uiManager = null;
   }
 }

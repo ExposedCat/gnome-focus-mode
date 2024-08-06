@@ -21,20 +21,20 @@ export default class PreferencesManager extends ExtensionPreferences {
     // TODO: Use shared class context
     window._settings = this.getSettings();
 
-    const windowsPage = new Adw.PreferencesPage({
-      title: 'Windows',
-      icon_name: 'overlapping-windows-symbolic',
-    });
-    window.add(windowsPage);
+    // const windowsPage = new Adw.PreferencesPage({
+    //   title: 'Windows',
+    //   icon_name: 'overlapping-windows-symbolic',
+    // });
+    // window.add(windowsPage);
 
-    const windowsGroup = new Adw.PreferencesGroup({});
-    windowsPage.add(windowsGroup);
+    // const windowsGroup = new Adw.PreferencesGroup({});
+    // windowsPage.add(windowsGroup);
 
-    const windowsRow = new Adw.EntryRow({
-      title: 'Work windows (comma-separated IDs)',
-    });
-    this.bindStringRow(window._settings, windowsRow, 'work-windows');
-    windowsGroup.add(windowsRow);
+    // const windowsRow = new Adw.EntryRow({
+    //   title: 'Work windows (comma-separated IDs)',
+    // });
+    // this.bindStringRow(window._settings, windowsRow, 'work-windows');
+    // windowsGroup.add(windowsRow);
 
     const timePage = new Adw.PreferencesPage({
       title: 'Time',
