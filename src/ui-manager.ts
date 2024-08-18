@@ -5,21 +5,21 @@ import St from 'gi://St';
 import Gda5 from 'gi://Gda?version=5.0';
 import Clutter from 'gi://Clutter';
 
-import { applyEffect, blur, removeEffect } from './effects.js';
-import { connectToDb, createWindow, getEnabledWindows, setWindowEnabled } from './database.js';
+import { EffectManager } from './effect-manager.js';
+import { connectToDb, createApp, getEnabledApps, setAppEnabled } from './database.js';
 
 export class UIManager {
   private entries: Record<string, PopupMenu.PopupMenuItem> = {};
   private button: PanelMenu.Button;
   private label: St.Label;
   private db: Gda5.Connection;
-  private enabledWindows: Record<string, boolean> = {};
-  private effect: Clutter.OffscreenEffect | null = null;
+  private enabledApps: Record<string, boolean> = {};
+  private effectManager: EffectManager;
 
   constructor() {
     this.db = connectToDb();
 
-    this.fetchEnabledWindows();
+    this.fetchEnabledApps();
 
     this.button = new PanelMenu.Button(0.0, '', false);
 
@@ -32,11 +32,13 @@ export class UIManager {
     box.add_child(this.label);
 
     this.button.add_child(box);
+
+    this.effectManager = new EffectManager();
   }
 
-  fetchEnabledWindows() {
-    const enabledIds = getEnabledWindows(this.db);
-    this.enabledWindows = Object.fromEntries(enabledIds.map(({ id, enabled }) => [id, enabled]));
+  fetchEnabledApps() {
+    const enabledIds = getEnabledApps(this.db);
+    this.enabledApps = Object.fromEntries(enabledIds.map(({ id, enabled }) => [id, enabled]));
   }
 
   setText(text: string) {
@@ -45,25 +47,25 @@ export class UIManager {
 
   updateEntryText(id: string, name: string, time: string) {
     const entry = this.entries[id];
-    const enabled = !!this.enabledWindows[id];
+    const enabled = !!this.enabledApps[id];
     const text = `${enabled ? '+' : ''} ${name} - ${time}`;
     if (entry) {
       entry.label.set_text(text);
     } else {
       this.entries[id] = new PopupMenu.PopupMenuItem(text);
       this.entries[id].connect('activate', () => {
-        if (id in this.enabledWindows) {
-          const enabled = !this.enabledWindows[id];
-          setWindowEnabled(this.db, id, enabled);
-          this.enabledWindows[id] = enabled;
+        if (id in this.enabledApps) {
+          const enabled = !this.enabledApps[id];
+          setAppEnabled(this.db, id, enabled);
+          this.enabledApps[id] = enabled;
           if (!enabled) {
             this.setState(id, 'normal');
           }
         } else {
-          this.enabledWindows[id] = true;
-          createWindow(this.db, id, true);
+          this.enabledApps[id] = true;
+          createApp(this.db, id, true);
         }
-        const enabled = this.enabledWindows[id];
+        const enabled = this.enabledApps[id];
         const currentText = this.entries[id].label.get_text();
         this.entries[id].label.set_text(`${enabled ? '+' : ''} ${currentText.slice(enabled ? 2 : 1)}`);
       });
@@ -71,25 +73,14 @@ export class UIManager {
     }
   }
 
-  disableEffect() {
-    if (this.effect) {
-      removeEffect(this.effect);
-      this.effect = null;
-    }
-  }
-
-  enableEffect() {
-    this.disableEffect();
-    this.effect = blur();
-    applyEffect(this.effect);
-  }
-
   setState(id: string | null, state: 'normal' | 'warning' | 'error') {
-    if (!id || this.enabledWindows[id] || state === 'normal') {
-      if (state === 'error') {
-        this.enableEffect();
-      } else if (state === 'normal' && this.effect) {
-        this.disableEffect();
+    if (!id || this.enabledApps[id] || state === 'normal') {
+      if (id) {
+        if (state === 'error') {
+          this.effectManager.applyEffect(id, 'blur');
+        } else if (state === 'normal') {
+          this.effectManager.removeEffects(id);
+        }
       }
       const background = state === 'normal' ? 'unset' : state === 'warning' ? 'orange' : 'red';
       const color = state === 'normal' ? 'unset' : 'white';
@@ -103,7 +94,7 @@ export class UIManager {
 
   stop() {
     this.db.close();
-    this.disableEffect();
+    this.effectManager.dispose();
     this.button.destroy();
   }
 }
